@@ -15,7 +15,7 @@ services:
     name: deposit-saving-web
     runtime: static
     rootDir: frontend
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
+    buildCommand: pnpm install --frozen-lockfile && pnpm run build
     staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE_URL

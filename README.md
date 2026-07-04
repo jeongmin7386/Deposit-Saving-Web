@@ -83,7 +83,7 @@ deposit-saving-web      # React 정적 사이트
 - 백엔드: `backend` 폴더를 Python Web Service로 배포
 - 백엔드 시작 명령: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - 프론트엔드: `frontend` 폴더를 Static Site로 배포
-- 프론트엔드 빌드 명령: `corepack enable && pnpm install --frozen-lockfile && pnpm run build`
+- 프론트엔드 빌드 명령: `pnpm install --frozen-lockfile && pnpm run build`
 - 프론트엔드 배포 폴더: `dist`
 - 프론트엔드의 `VITE_API_BASE_URL`은 백엔드 Render URL을 자동 참조
 
@@ -104,7 +104,7 @@ Blueprint를 쓰지 않는다면 Render에서 서비스를 두 개 직접 만듭
 ### 프론트엔드 Static Site
 
 - Root Directory: `frontend`
-- Build Command: `corepack enable && pnpm install --frozen-lockfile && pnpm run build`
+- Build Command: `pnpm install --frozen-lockfile && pnpm run build`
 - Publish Directory: `dist`
 - Environment Variable:
 
@@ -160,4 +160,3 @@ pytest
 - 만기 예상 수령액: `principal + bank_interest + government_contribution`
 
 정부기여금은 `1.12 * (원금 + 이자)` 방식이 아니라 원금 기준으로 별도 계산합니다.
-
