@@ -1,8 +1,7 @@
 # 예금/적금 웹 계산기
 
 기존 콘솔 기반 `deposit savings.py`를 FastAPI 백엔드와 React/Vite 프론트엔드로 분리한 웹 계산기입니다. 원본 콘솔 버전은 `legacy/console_app.py`에 보관했습니다.
-# 웹사이트 배포
-https://deposit-saving-web.onrender.com/
+
 ## 주요 기능
 
 - 예금 계산

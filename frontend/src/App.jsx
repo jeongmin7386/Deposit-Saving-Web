@@ -41,6 +41,7 @@ const products = [
     endpoint: "/api/calculate/youth-leap",
     icon: BadgePercent,
     amountLabel: "월 납입액",
+    maxAmount: 700000,
     fixedMonths: 60,
   },
   {
@@ -49,6 +50,7 @@ const products = [
     endpoint: "/api/calculate/youth-future",
     icon: Coins,
     amountLabel: "월 납입액",
+    maxAmount: 500000,
     fixedMonths: 36,
   },
 ];
@@ -195,7 +197,8 @@ function App() {
                 <input
                   inputMode="numeric"
                   min="1"
-                  step="10000"
+                  max={selectedProduct.maxAmount}
+                  step="1"
                   type="number"
                   value={amount}
                   onChange={(event) => setAmount(event.target.value)}
@@ -243,7 +246,7 @@ function App() {
                   <input
                     inputMode="numeric"
                     min="0"
-                    step="1000000"
+                    step="1"
                     type="number"
                     placeholder="선택 입력"
                     value={annualIncome}
