@@ -40,7 +40,16 @@ app.add_middleware(
 app.include_router(router)
 
 
+@app.get("/")
+def root() -> dict[str, str]:
+    return {
+        "service": "Deposit Savings Calculator API",
+        "status": "ok",
+        "docs": "/docs",
+        "health": "/health",
+    }
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
-
