@@ -1,15 +1,17 @@
-# 예금/적금 웹 계산기
+# 예금/적금 만기 예상조회 웹서비스
 
-기존 콘솔 기반 `deposit savings.py`를 FastAPI 백엔드와 React/Vite 프론트엔드로 분리한 웹 계산기입니다. 원본 콘솔 버전은 `legacy/console_app.py`에 보관했습니다.
+기존 콘솔 기반 `deposit savings.py`를 FastAPI 백엔드와 React/Vite 프론트엔드로 분리한 웹앱입니다. 원본 콘솔 버전은 `legacy/console_app.py`에 보관했습니다.
 
 ## 주요 기능
 
-- 예금 계산
-- 적금 계산
-- 청년도약계좌 계산
-- 청년미래적금 일반형/우대형 계산
-- 청년미래적금 일반형/우대형 비교표
-- 총 납입 원금, 은행 이자, 정부기여금, 만기 예상 수령액 표시
+- 직접 입력 계산기: 예금, 적금, 청년도약계좌, 청년미래적금
+- 청년미래적금 일반형/우대형 계산 및 비교표
+- 금융감독원 FINLIFE Open API 기반 예금/적금 상품 동기화
+- 상품 검색, 즐겨찾기, 비교함, 상품별 만기 예상조회 연결
+- 관리자 화면의 FINLIFE 동기화와 수동 상품 등록
+- SQLite 기반 로컬 상품 DB와 동기화 로그
+
+금융상품 검색 정보는 FINLIFE API와 수동 등록 데이터를 기반으로 하며, 모든 금융회사와 모든 상품을 보장하지 않습니다. 실제 가입 가능 여부와 우대 조건 적용 여부는 금융기관 심사 기준에 따라 달라질 수 있습니다.
 
 ## 프로젝트 구조
 
@@ -18,16 +20,38 @@ backend/
   app/
     api/
     calculators/
+    repositories/
     schemas/
+    services/
   tests/
 frontend/
   src/
 legacy/
   console_app.py
 render.yaml
+.env.example
 ```
 
-## 로컬 백엔드 실행
+## 환경변수
+
+루트의 `.env.example`을 참고하세요.
+
+```text
+FINLIFE_API_KEY=금융감독원_오픈API_키
+DATABASE_URL=sqlite:///./financial_products.db
+SYNC_ON_STARTUP=false
+ADMIN_TOKEN=
+ALLOWED_ORIGINS=
+ALLOWED_ORIGIN_REGEX=https://.*\.onrender\.com
+```
+
+프론트엔드 로컬 실행 시 `frontend/.env`에 백엔드 주소를 넣을 수 있습니다.
+
+```text
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+## 백엔드 실행
 
 ```bash
 cd backend
@@ -37,9 +61,9 @@ python -m pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-기본 주소는 `http://127.0.0.1:8000`입니다.
+기본 주소는 `http://127.0.0.1:8000`입니다. API 문서는 `http://127.0.0.1:8000/docs`에서 확인할 수 있습니다.
 
-## 로컬 프론트엔드 실행
+## 프론트엔드 실행
 
 ```bash
 cd frontend
@@ -47,70 +71,7 @@ pnpm install
 pnpm run dev
 ```
 
-기본 주소는 `http://127.0.0.1:5173`입니다. 백엔드 주소를 바꾸려면 `frontend/.env`에 아래 값을 설정합니다.
-
-```text
-VITE_API_BASE_URL=http://127.0.0.1:8000
-```
-
-## Render 배포
-
-이 저장소는 루트의 `render.yaml`을 사용해 Render Blueprint로 배포할 수 있습니다.
-
-1. GitHub에 아래 파일과 폴더를 push합니다.
-
-```text
-backend/
-frontend/
-legacy/
-README.md
-.gitignore
-render.yaml
-```
-
-2. Render Dashboard에서 `New +` → `Blueprint`를 선택합니다.
-3. GitHub 저장소를 연결합니다.
-4. Render가 루트의 `render.yaml`을 인식하면 적용합니다.
-5. 배포가 끝나면 두 서비스가 생성됩니다.
-
-```text
-deposit-saving-web-api  # FastAPI 백엔드
-deposit-saving-web      # React 정적 사이트
-```
-
-`render.yaml`의 핵심 설정은 아래와 같습니다.
-
-- 백엔드: `backend` 폴더를 Python Web Service로 배포
-- 백엔드 시작 명령: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- 프론트엔드: `frontend` 폴더를 Static Site로 배포
-- 프론트엔드 빌드 명령: `pnpm install --frozen-lockfile && pnpm run build`
-- 프론트엔드 배포 폴더: `dist`
-- 프론트엔드의 `VITE_API_BASE_URL`은 백엔드 Render URL을 자동 참조
-
-React 라우팅을 위해 `/*` 요청은 `/index.html`로 rewrite됩니다.
-
-## 수동 배포 방식
-
-Blueprint를 쓰지 않는다면 Render에서 서비스를 두 개 직접 만듭니다.
-
-### 백엔드 Web Service
-
-- Root Directory: `backend`
-- Runtime: `Python 3`
-- Build Command: `pip install -r requirements.txt`
-- Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- Health Check Path: `/health`
-
-### 프론트엔드 Static Site
-
-- Root Directory: `frontend`
-- Build Command: `pnpm install --frozen-lockfile && pnpm run build`
-- Publish Directory: `dist`
-- Environment Variable:
-
-```text
-VITE_API_BASE_URL=https://백엔드서비스이름.onrender.com
-```
+기본 주소는 `http://127.0.0.1:5173`입니다.
 
 ## 테스트
 
@@ -119,18 +80,18 @@ cd backend
 pytest
 ```
 
-청년미래적금 테스트는 월 500,000원, 연 5%, 36개월 기준의 일반형/우대형 계산, 월 납입 한도 검증, 정부기여금 차이를 확인합니다.
+테스트에는 청년미래적금 일반형/우대형 계산, 월 납입 한도 검증, 정부기여금 차이, 상품 저장소 검색/비교 검증이 포함되어 있습니다.
 
 ## API 예시
 
-### 청년미래적금
+### 청년미래적금 계산
 
 `POST /api/calculate/youth-future`
 
 ```json
 {
   "monthly_amount": 500000,
-  "annual_rate": 5.0,
+  "annual_rate": 5,
   "benefit_type": "general"
 }
 ```
@@ -149,6 +110,73 @@ pytest
 }
 ```
 
+### 상품 검색
+
+`GET /api/products?product_type=deposit&term_months=12&min_rate=3.5`
+
+응답 예시:
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "product_type": "deposit",
+      "product_name": "정기예금",
+      "company_name": "샘플은행",
+      "data_source": "finlife",
+      "best_rate": 4.1,
+      "best_term_months": 12,
+      "options": []
+    }
+  ],
+  "total": 1,
+  "limit": 20,
+  "offset": 0
+}
+```
+
+### 상품 비교
+
+`POST /api/products/compare`
+
+```json
+{
+  "product_ids": [1, 2]
+}
+```
+
+### FINLIFE 동기화
+
+`POST /api/admin/sync/finlife`
+
+```json
+{
+  "product_types": ["deposit", "saving"],
+  "sector_codes": ["020000", "030300"]
+}
+```
+
+`ADMIN_TOKEN`을 설정한 경우 요청 헤더에 `X-Admin-Token`을 함께 보내야 합니다.
+
+### 수동 상품 등록
+
+`POST /api/admin/products`
+
+```json
+{
+  "company_name": "샘플은행",
+  "product_type": "deposit",
+  "product_name": "샘플 정기예금",
+  "join_method": "인터넷, 스마트폰",
+  "option": {
+    "saving_term_months": 12,
+    "base_rate": 3.5,
+    "maximum_rate": 4.1
+  }
+}
+```
+
 ## 청년미래적금 계산 기준
 
 - 가입기간: 36개월
@@ -160,3 +188,22 @@ pytest
 - 만기 예상 수령액: `principal + bank_interest + government_contribution`
 
 정부기여금은 `1.12 * (원금 + 이자)` 방식이 아니라 원금 기준으로 별도 계산합니다.
+
+## Render 배포
+
+루트의 `render.yaml`을 사용해 Blueprint로 배포할 수 있습니다.
+
+1. GitHub에 `backend/`, `frontend/`, `legacy/`, `README.md`, `.env.example`, `.gitignore`, `render.yaml`을 push합니다.
+2. Render Dashboard에서 `New +` → `Blueprint`를 선택합니다.
+3. GitHub 저장소를 연결하고 `render.yaml`을 적용합니다.
+4. 백엔드 서비스 환경변수에 `FINLIFE_API_KEY`를 등록합니다.
+5. 필요하면 `ADMIN_TOKEN`을 등록해 관리자 API를 보호합니다.
+
+생성되는 서비스:
+
+```text
+deposit-saving-web-api  # FastAPI 백엔드
+deposit-saving-web      # React 정적 사이트
+```
+
+프론트엔드의 `VITE_API_BASE_URL`은 `render.yaml`에서 백엔드 Render URL을 참조하도록 설정되어 있습니다.

@@ -10,6 +10,14 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.13
+      - key: FINLIFE_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        value: sqlite:///./financial_products.db
+      - key: SYNC_ON_STARTUP
+        value: false
+      - key: ADMIN_TOKEN
+        sync: false
 
   - type: web
     name: deposit-saving-web
