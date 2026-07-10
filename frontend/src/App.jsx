@@ -73,6 +73,10 @@ const viewTabs = [
   { id: "admin", label: "관리", icon: Database },
 ];
 
+function isAdminRoute() {
+  return window.location.pathname.replace(/\/$/, "") === "/admin";
+}
+
 function readStoredIds(key) {
   try {
     return JSON.parse(localStorage.getItem(key) || "[]");
@@ -128,7 +132,8 @@ async function requestJson(path, options = {}) {
 }
 
 function App() {
-  const [activeView, setActiveView] = useState("finder");
+  const [activeView, setActiveView] = useState(() => (isAdminRoute() ? "admin" : "finder"));
+  const showAdminTab = isAdminRoute();
 
   const [productId, setProductId] = useState("youth-future");
   const [amount, setAmount] = useState("500000");
@@ -174,6 +179,10 @@ function App() {
   });
 
   const selectedProduct = productMap[productId];
+  const visibleTabs = useMemo(
+    () => viewTabs.filter((tab) => showAdminTab || tab.id !== "admin"),
+    [showAdminTab],
+  );
 
   const payload = useMemo(() => {
     const basePayload = {
@@ -197,6 +206,12 @@ function App() {
   useEffect(() => {
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    if (!showAdminTab && activeView === "admin") {
+      setActiveView("finder");
+    }
+  }, [activeView, showAdminTab]);
 
   useEffect(() => {
     localStorage.setItem("compareProductIds", JSON.stringify(compareIds));
@@ -556,7 +571,7 @@ function App() {
           </div>
 
           <nav className="view-tabs" aria-label="서비스 메뉴">
-            {viewTabs.map((tab) => {
+            {visibleTabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
